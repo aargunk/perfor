@@ -148,9 +148,20 @@
   table.matrix tbody th { text-align: left; font-weight: 600; color: var(--text-primary); font-size: 12.5px; padding-right: 12px; border-right: 1px solid var(--gridline); position: sticky; left: 0; background: var(--surface-card); }
   table.matrix td.cell { border-radius: 4px; cursor: default; }
   table.matrix td.cell.zero { color: var(--text-muted); }
+  table.matrix td.cell.clickable { cursor: pointer; }
+  table.matrix td.cell.clickable:hover, table.matrix td.cell.clickable:focus-visible { outline: 2px solid var(--c-aktif); outline-offset: -2px; }
   table.matrix td.total-col, table.matrix th.total-col { border-left: 1px solid var(--gridline); font-weight: 600; }
   table.matrix tfoot th, table.matrix tfoot td { border-top: 1px solid var(--gridline); font-weight: 600; padding-top: 8px; }
   table.matrix tfoot th { position: sticky; left: 0; background: var(--surface-card); text-align: left; }
+  .matrix-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 60; display: none; align-items: flex-start; justify-content: center; padding: 64px 20px; overflow-y: auto; }
+  .modal-overlay.show { display: flex; }
+  .modal-panel { background: var(--surface-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 16px 44px rgba(0,0,0,0.32); max-width: 560px; width: 100%; padding: 20px 22px 22px; position: relative; }
+  .modal-close { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-1); color: var(--text-secondary); font-size: 14px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .modal-close:hover { color: var(--text-primary); }
+  .modal-title { font-size: 15px; font-weight: 700; padding-right: 30px; }
+  .modal-desc { font-size: 12.5px; color: var(--text-secondary); margin-top: 4px; margin-bottom: 16px; line-height: 1.5; }
 
   table.datatable { width: 100%; border-collapse: collapse; font-size: 12.8px; }
   table.datatable th, table.datatable td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--gridline); }
@@ -174,6 +185,12 @@
 </head>
 <body>
 <div id="tooltip"></div>
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <button class="modal-close" id="modal-close" type="button" aria-label="Kapat">✕</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
 <div class="wrap">
   <header class="top">
     <div>
@@ -255,6 +272,39 @@ function showTooltip(evt, titleText, rows) {
 }
 function hideTooltip() { tooltipEl.classList.remove('show'); }
 function getHex(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+/* ---------- modal (drill-down detail panel) ---------- */
+const modalOverlay = document.getElementById('modal-overlay');
+const modalBody = document.getElementById('modal-body');
+function openModal(titleText, descText, items, total) {
+  modalBody.innerHTML = '';
+  const t = document.createElement('div'); t.className = 'modal-title'; t.id = 'modal-title'; t.textContent = titleText;
+  modalBody.appendChild(t);
+  const d = document.createElement('div'); d.className = 'modal-desc'; d.textContent = descText;
+  modalBody.appendChild(d);
+  if (!items.length) {
+    const e = document.createElement('div'); e.className = 'empty-state'; e.style.padding = '16px 0'; e.textContent = 'Ayrılma nedeni kayıtlı değil.';
+    modalBody.appendChild(e);
+  } else {
+    const max = Math.max(...items.map(i => i.toplam));
+    items.forEach(it => {
+      const row = document.createElement('div'); row.className = 'reason-row';
+      row.innerHTML = `<div class="reason-name">${it.name}</div>`;
+      const wrap = document.createElement('div'); wrap.className = 'reason-bar-wrap';
+      const fill = document.createElement('div'); fill.className = 'reason-bar-fill'; fill.style.width = (it.toplam/max*100)+'%';
+      wrap.appendChild(fill);
+      row.appendChild(wrap);
+      const val = document.createElement('div'); val.className = 'reason-val'; val.textContent = `${fmt(it.toplam)} · ${pct(it.toplam, total)}`;
+      row.appendChild(val);
+      modalBody.appendChild(row);
+    });
+  }
+  modalOverlay.classList.add('show');
+}
+function closeModal() { modalOverlay.classList.remove('show'); }
+document.getElementById('modal-close').addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
 /* ---------- filters ---------- */
 const state = { fak: null, dept: null, kayit: null, uyruk: null };
@@ -606,18 +656,50 @@ function buildDurationMatrixCard(rows) {
   html += `<td class="total-col">${fmt(grandTotal)}</td><td>${num1(overallAvg)}</td></tr></tfoot></table>`;
   wrap.innerHTML = html;
 
+  function bucketOf(v) {
+    let b = Math.floor(v);
+    if (b > MATRIX_MAX_BUCKET) b = MATRIX_MAX_BUCKET;
+    if (b < 0) b = 0;
+    return b;
+  }
+  function reasonBreakdown(subsetRows) {
+    const m = new Map();
+    subsetRows.forEach(r => { m.set(r[7], (m.get(r[7]) || 0) + 1); });
+    let items = [...m.entries()].map(([k, v]) => ({ name: DATA.REASONS[k], toplam: v }));
+    items.sort((a, b) => b.toplam - a.toplam);
+    const top8 = items.slice(0, 8);
+    const rest = items.slice(8).reduce((a, it) => a + it.toplam, 0);
+    if (rest > 0) top8.push({ name: 'Diğer', toplam: rest });
+    return top8;
+  }
+
   wrap.querySelectorAll('td.cell').forEach(td => {
-    const y = td.dataset.year, b = +td.dataset.bucket, c = +td.dataset.count;
+    const y = +td.dataset.year, b = +td.dataset.bucket, c = +td.dataset.count;
     const bLabel = b === MATRIX_MAX_BUCKET ? '8+ yıl' : `${b} yıl`;
     td.addEventListener('pointermove', (e) => showTooltip(e, `${y} girişli`, [
       { label: 'Okuma süresi', value: bLabel },
       { label: 'Öğrenci', value: fmt(c) },
-      { label: `${y} girişliler içindeki payı`, value: pct(c, byYear.get(+y).n) },
+      { label: `${y} girişliler içindeki payı`, value: pct(c, byYear.get(y).n) },
     ]));
     td.addEventListener('pointerleave', hideTooltip);
+    if (c > 0) {
+      td.classList.add('clickable');
+      td.setAttribute('role', 'button');
+      td.setAttribute('tabindex', '0');
+      const openCellModal = () => {
+        hideTooltip();
+        const subset = ayr.filter(r => r[10] === y && bucketOf(r[8]) === b);
+        const items = reasonBreakdown(subset);
+        openModal(`${y} girişli · ${bLabel} okuyup ayrılanlar`, `${fmt(c)} öğrenci üzerinden ayrılma nedenleri dağılımı.`, items, c);
+      };
+      td.addEventListener('click', openCellModal);
+      td.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCellModal(); } });
+    }
   });
 
   card.appendChild(wrap);
+  const hint = document.createElement('div'); hint.className = 'matrix-hint'; hint.textContent = 'Bir hücreye tıklayarak o gruptaki öğrencilerin ayrılma nedenlerini görebilirsiniz.';
+  card.appendChild(hint);
   return card;
 }
 
