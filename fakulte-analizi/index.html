@@ -159,6 +159,14 @@
   table.matrix tfoot th { position: sticky; left: 0; background: var(--surface-card); text-align: left; }
   .matrix-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
 
+  .trend-chart-wrap { overflow-x: auto; }
+  .trend-svg { display: block; }
+  .trend-grid { stroke: var(--gridline); stroke-width: 1; }
+  .trend-axis-label { font-size: 10.5px; fill: var(--text-muted); }
+  .trend-value-label { font-size: 12px; font-weight: 700; fill: var(--text-primary); }
+  .trend-crosshair { stroke: var(--text-muted); stroke-width: 1; opacity: 0; pointer-events: none; }
+  .trend-hit { fill: transparent; cursor: crosshair; }
+
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 60; display: none; align-items: flex-start; justify-content: center; padding: 64px 20px; overflow-y: auto; }
   .modal-overlay.show { display: flex; }
   .modal-panel { background: var(--surface-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 16px 44px rgba(0,0,0,0.32); max-width: 560px; width: 100%; padding: 20px 22px 22px; position: relative; }
@@ -496,6 +504,189 @@ function renderAll() {
   content.appendChild(buildAktifCard(rows));
   content.appendChild(buildReasonCard(rows));
   content.appendChild(buildDurationMatrixCard(rows));
+  content.appendChild(buildMezuniyetOraniTrendCard(rows));
+  content.appendChild(buildYatayGecisTrendCard(rows));
+  content.appendChild(buildAktifTrendCard(rows));
+}
+
+/* ---------- Giriş Yılına Göre trend grafiği (ortak yardımcı) ---------- */
+function niceMax(v) {
+  if (!(v > 0)) return 1;
+  const mag = Math.pow(10, Math.floor(Math.log10(v)));
+  const n = v / mag;
+  const f = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10;
+  return f * mag;
+}
+
+function buildYearlyTrendCard({ title, desc, colorVar, filename, years, exportHeaders, computeYear, yAxisSuffix }) {
+  const card = document.createElement('div'); card.className = 'card';
+  const head = document.createElement('div'); head.className = 'card-head';
+  head.innerHTML = `<div><div class="card-title">${title}</div><div class="card-desc">${desc}</div></div>`;
+  card.appendChild(head);
+
+  const points = years.map(y => ({ year: y, r: computeYear(y) }));
+  const validPoints = points.filter(p => p.r !== null);
+  head.appendChild(makeDownloadBtn(() => {
+    const out = points.map(p => [p.year, ...(p.r ? p.r.exportRow : exportHeaders.slice(1).map(() => '—'))]);
+    downloadExcel(filename, exportHeaders, out);
+  }));
+  if (!validPoints.length) {
+    const e = document.createElement('div'); e.className = 'empty-state'; e.textContent = 'Seçili aralıkta veri bulunamadı.';
+    card.appendChild(e);
+    return card;
+  }
+
+  const color = getHex(colorVar);
+  const W = 880, H = 230, padL = 46, padR = 20, padT = 16, padB = 30;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const maxVal = niceMax(Math.max(...validPoints.map(p => p.r.value)) * 1.15);
+  const n = years.length;
+  const xAt = i => padL + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW);
+  const yAt = v => padT + plotH - (v / maxVal) * plotH;
+
+  const steps = 4;
+  let gridSvg = '';
+  for (let s = 0; s <= steps; s++) {
+    const v = maxVal * s / steps;
+    const y = yAt(v);
+    gridSvg += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" class="trend-grid"/>`;
+    gridSvg += `<text x="${padL - 8}" y="${y + 3}" text-anchor="end" class="trend-axis-label">${fmt(Math.round(v))}${yAxisSuffix || ''}</text>`;
+  }
+
+  const labelEvery = n > 12 ? 2 : 1;
+  let xLabelSvg = '';
+  years.forEach((y, i) => {
+    if (i % labelEvery !== 0 && i !== n - 1) return;
+    xLabelSvg += `<text x="${xAt(i)}" y="${H - 8}" text-anchor="middle" class="trend-axis-label">${y}</text>`;
+  });
+
+  let pathD = ''; let drawing = false;
+  points.forEach((p, i) => {
+    if (p.r === null) { drawing = false; return; }
+    const x = xAt(i), y = yAt(p.r.value);
+    pathD += (drawing ? ' L ' : 'M ') + x.toFixed(1) + ' ' + y.toFixed(1);
+    drawing = true;
+  });
+
+  const lastValidIdx = points.reduce((acc, p, i) => p.r !== null ? i : acc, -1);
+  let dotsSvg = '';
+  points.forEach((p, i) => {
+    if (p.r === null) return;
+    const x = xAt(i), y = yAt(p.r.value);
+    const isLast = i === lastValidIdx;
+    dotsSvg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isLast ? 5 : 3}" fill="${color}" stroke="var(--surface-card)" stroke-width="2"/>`;
+    if (isLast) {
+      const anchor = i === n - 1 ? 'end' : 'middle';
+      dotsSvg += `<text x="${x.toFixed(1)}" y="${(y - 12).toFixed(1)}" text-anchor="${anchor}" class="trend-value-label">${p.r.display}</text>`;
+    }
+  });
+
+  const hitW = n > 1 ? plotW / (n - 1) : plotW;
+  let hitSvg = '';
+  years.forEach((y, i) => {
+    const x = xAt(i);
+    hitSvg += `<rect x="${(x - hitW / 2).toFixed(1)}" y="${padT}" width="${hitW.toFixed(1)}" height="${plotH}" class="trend-hit" data-idx="${i}"/>`;
+  });
+
+  const wrap = document.createElement('div'); wrap.className = 'trend-chart-wrap';
+  wrap.innerHTML = `<svg class="trend-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    ${gridSvg}
+    ${xLabelSvg}
+    <path d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dotsSvg}
+    <line class="trend-crosshair" x1="0" y1="${padT}" x2="0" y2="${padT + plotH}"/>
+    ${hitSvg}
+  </svg>`;
+  card.appendChild(wrap);
+
+  const crosshair = wrap.querySelector('.trend-crosshair');
+  wrap.querySelectorAll('.trend-hit').forEach(rect => {
+    const i = +rect.dataset.idx;
+    const p = points[i];
+    const x = xAt(i);
+    rect.addEventListener('pointermove', (e) => {
+      crosshair.setAttribute('x1', x); crosshair.setAttribute('x2', x); crosshair.style.opacity = '1';
+      if (p.r === null) showTooltip(e, `${p.year} girişli`, [{ label: 'Veri', value: 'Yok' }]);
+      else showTooltip(e, `${p.year} girişli`, p.r.tooltip);
+    });
+    rect.addEventListener('pointerleave', () => { crosshair.style.opacity = '0'; hideTooltip(); });
+  });
+
+  return card;
+}
+
+function trendYears() { return YEARS.filter(y => y >= state.yilBas && y <= state.yilBit); }
+
+/* ---------- 6. Giriş Yılına Göre Mezuniyet Oranı ---------- */
+function buildMezuniyetOraniTrendCard(rows) {
+  return buildYearlyTrendCard({
+    title: 'Giriş Yılına Göre Mezuniyet Oranı',
+    desc: `${unitLabel()} için her giriş yılı kohortunun mezuniyet oranı (mezun / (mezun + ayrılan) × 100). Aktif öğrenciler hesaba katılmamıştır; yakın yıllardaki kohortlar henüz süreci tamamlamadığından oranları düşük veya eksik görünebilir.`,
+    colorVar: '--c-mezun',
+    filename: 'giris_yilina_gore_mezuniyet_orani_' + sanitizeFilename(unitLabel()),
+    years: trendYears(),
+    yAxisSuffix: '%',
+    exportHeaders: ['Giriş Yılı', 'Mezuniyet Oranı (%)', 'Mezun', 'Ayrılan'],
+    computeYear: (y) => {
+      const sub = rows.filter(r => r[GIRIS_IDX] === y);
+      const mezun = sub.filter(r => r[3] === 0).length;
+      const ayrilan = sub.filter(r => r[3] === 2).length;
+      const denom = mezun + ayrilan;
+      if (!denom) return null;
+      const value = mezun / denom * 100;
+      const pctStr = value.toFixed(1).replace('.', ',') + '%';
+      return {
+        value, display: pctStr, exportRow: [pctStr, mezun, ayrilan],
+        tooltip: [
+          { label: 'Mezuniyet Oranı', value: pctStr },
+          { label: 'Mezun', value: fmt(mezun) },
+          { label: 'Ayrılan', value: fmt(ayrilan) },
+        ],
+      };
+    },
+  });
+}
+
+/* ---------- 7. Giriş Yılına Göre Yatay Geçiş ---------- */
+function buildYatayGecisTrendCard(rows) {
+  return buildYearlyTrendCard({
+    title: 'Giriş Yılına Göre Yatay Geçiş',
+    desc: `${unitLabel()} için her giriş yılında yatay geçiş yoluyla (Kayıt Türü = Yatay Geçiş) kayıt yaptıran öğrenci sayısı.`,
+    colorVar: '--meter-fill',
+    filename: 'giris_yilina_gore_yatay_gecis_' + sanitizeFilename(unitLabel()),
+    years: trendYears(),
+    exportHeaders: ['Giriş Yılı', 'Yatay Geçiş Öğrenci', 'Yıl İçindeki Payı'],
+    computeYear: (y) => {
+      const sub = rows.filter(r => r[GIRIS_IDX] === y);
+      if (!sub.length) return null;
+      const yg = sub.filter(r => r[4] === 3).length;
+      return {
+        value: yg, display: fmt(yg), exportRow: [yg, pct(yg, sub.length)],
+        tooltip: [
+          { label: 'Yatay Geçiş Öğrenci', value: fmt(yg) },
+          { label: `${y} girişliler içindeki payı`, value: pct(yg, sub.length) },
+        ],
+      };
+    },
+  });
+}
+
+/* ---------- 8. Giriş Yılına Göre Aktif Öğrenci Sayısı ---------- */
+function buildAktifTrendCard(rows) {
+  return buildYearlyTrendCard({
+    title: 'Giriş Yılına Göre Aktif Öğrenci Sayısı',
+    desc: `${unitLabel()} için her giriş yılı kohortundan hâlâ aktif (devam eden) öğrenci sayısı. Yüksek değerler, o kohortun normalden uzun süredir eğitime devam ettiğini gösterebilir.`,
+    colorVar: '--c-aktif',
+    filename: 'giris_yilina_gore_aktif_ogrenci_' + sanitizeFilename(unitLabel()),
+    years: trendYears(),
+    exportHeaders: ['Giriş Yılı', 'Aktif Öğrenci'],
+    computeYear: (y) => {
+      const sub = rows.filter(r => r[GIRIS_IDX] === y);
+      if (!sub.length) return null;
+      const aktif = sub.filter(r => r[3] === 1).length;
+      return { value: aktif, display: fmt(aktif), exportRow: [aktif], tooltip: [{ label: 'Aktif Öğrenci', value: fmt(aktif) }] };
+    },
+  });
 }
 
 /* ---------- 1. Genel Durum Dağılımı (donut + delta) ---------- */

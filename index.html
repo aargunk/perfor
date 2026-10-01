@@ -141,11 +141,15 @@
 
   .egt-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
   .egt-row:last-child { margin-bottom: 0; }
+  .egt-row.clickable { cursor: pointer; }
+  .egt-row.clickable:hover .egt-name { color: var(--c-aktif); text-decoration: underline; }
+  .egt-row.active .egt-name { color: var(--c-aktif); font-weight: 700; }
   .egt-name { width: 150px; flex: none; font-size: 13px; }
   .egt-bar-wrap { flex: 1; height: 22px; border-radius: 4px; overflow: hidden; display: flex; background: var(--gridline); }
   .egt-seg { height: 100%; }
   .egt-total { width: 108px; flex: none; text-align: right; font-size: 12.5px; font-variant-numeric: tabular-nums; }
   .egt-total .sub { display: block; color: var(--text-muted); font-size: 11px; }
+  .egt-chev { width: 14px; flex: none; text-align: center; color: var(--text-muted); font-size: 14px; }
 
   .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12.5px; margin-bottom: 12px; flex-wrap: wrap; }
   .breadcrumb .bc-link { color: var(--c-aktif); cursor: pointer; }
@@ -443,11 +447,11 @@ function matchEgt(r) {
   if (state.egt === 2) return r[2] === 2 || r[2] === 3;
   return r[2] === state.egt;
 }
-function filterRows() {
+function filterRows({ skipEgt = false } = {}) {
   return DATA.rows.filter(r =>
     (state.kayit === null || r[4] === state.kayit) &&
     (state.uyruk === null || r[5] === state.uyruk) &&
-    matchEgt(r) &&
+    (skipEgt || matchEgt(r)) &&
     r[GIRIS_IDX] >= state.yilBas && r[GIRIS_IDX] <= state.yilBit &&
     (!state.pasifGizle || !PASSIVE_DEPTS.has(r[1]))
   );
@@ -478,7 +482,7 @@ function renderAll() {
   document.getElementById('hdr-total').textContent = fmt(rows.length);
   renderKPIs(rows);
   renderDonut(rows);
-  renderEgt(rows);
+  renderEgt(filterRows({ skipEgt: true }));
   chart2Rows = rows;
   renderChart2();
   renderStatsGrid(rows);
@@ -488,7 +492,7 @@ function renderAll() {
 function renderKPIs(rows) {
   const o = aggCat(rows);
   const cards = [
-    { label: 'Toplam Kayıt', value: fmt(o.toplam), sub: (state.kayit==null && state.uyruk==null) ? '2011–2026' : 'seçili filtrelerle', color: null },
+    { label: 'Toplam Kayıt', value: fmt(o.toplam), sub: '', color: null },
     { label: 'Mezun', value: fmt(o.mezun), sub: pct(o.mezun, o.toplam), color: 'var(--c-mezun)' },
     { label: 'Aktif', value: fmt(o.aktif), sub: pct(o.aktif, o.toplam), color: 'var(--c-aktif)' },
     { label: 'Ayrılan', value: fmt(o.ayrilan), sub: pct(o.ayrilan, o.toplam), color: 'var(--c-ayrilan)' },
@@ -560,10 +564,12 @@ function describeArc(cx, cy, r, startAng, endAng) {
 /* ---------- eğitim düzeyi ---------- */
 function renderEgt(rows) {
   // EGT: 0 Lisans, 1 Ön Lisans, 2 Yüksek Lisans, 3 Doktora -> merge 2&3 into Lisansüstü
+  // NOT: `rows` burada state.egt filtresi UYGULANMADAN gelir (bkz. renderAll -> filterRows({skipEgt:true})),
+  // böylece üç satır da her zaman karşılaştırılabilir kalır ve bir satıra tıklamak diğerlerini sıfıra düşürmez.
   const groups = [
-    { name: 'Lisans', filt: r => r[2] === 0 },
-    { name: 'Ön Lisans', filt: r => r[2] === 1 },
-    { name: 'Lisansüstü (Y.Lisans + Doktora)', filt: r => r[2] === 2 || r[2] === 3 },
+    { name: 'Lisans', filt: r => r[2] === 0, egtVal: 0 },
+    { name: 'Ön Lisans', filt: r => r[2] === 1, egtVal: 1 },
+    { name: 'Lisansüstü (Y.Lisans + Doktora)', filt: r => r[2] === 2 || r[2] === 3, egtVal: 2 },
   ];
   const el = document.getElementById('egt-chart');
   el.innerHTML = '';
@@ -571,7 +577,8 @@ function renderEgt(rows) {
   groups.forEach(g => {
     const sub = rows.filter(g.filt);
     const o = aggCat(sub);
-    const row = document.createElement('div'); row.className = 'egt-row';
+    const isActive = state.egt === g.egtVal;
+    const row = document.createElement('div'); row.className = 'egt-row clickable' + (isActive ? ' active' : '');
     const bar = document.createElement('div'); bar.className = 'egt-bar-wrap';
     [['mezun','--c-mezun'],['aktif','--c-aktif'],['ayrilan','--c-ayrilan']].forEach(([k,c]) => {
       if (o[k] > 0) {
@@ -592,6 +599,14 @@ function renderEgt(rows) {
     const tot = document.createElement('div'); tot.className = 'egt-total';
     tot.innerHTML = `${fmt(o.toplam)}<span class="sub">M ${pct(o.mezun,o.toplam)}</span>`;
     row.appendChild(tot);
+    const chev = document.createElement('div'); chev.className = 'egt-chev'; chev.textContent = isActive ? '✓' : '›';
+    row.appendChild(chev);
+    row.addEventListener('click', () => {
+      hideTooltip();
+      state.egt = isActive ? null : g.egtVal;
+      selEgt.value = state.egt === null ? '' : String(state.egt);
+      renderAll();
+    });
     el.appendChild(row);
   });
 }
@@ -832,7 +847,7 @@ document.getElementById('donut-dl').addEventListener('click', () => {
 });
 
 document.getElementById('egt-dl').addEventListener('click', () => {
-  const rows = filterRows();
+  const rows = filterRows({ skipEgt: true });
   const groups = [
     { name: 'Lisans', filt: r => r[2] === 0 },
     { name: 'Ön Lisans', filt: r => r[2] === 1 },
