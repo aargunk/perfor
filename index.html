@@ -91,6 +91,10 @@
     font-size: 13px; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border);
     background: var(--surface-1); color: var(--text-primary); min-width: 170px;
   }
+  .filter-group.yil select { min-width: 84px; }
+  .filter-group .yil-sep { color: var(--text-muted); font-size: 12.5px; }
+  .filter-group.checkbox label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12.5px; color: var(--text-secondary); }
+  .filter-group.checkbox input { cursor: pointer; width: 14px; height: 14px; accent-color: var(--c-aktif); }
   .filter-reset { margin-left: auto; font-size: 12.5px; color: var(--c-aktif); text-decoration: none; cursor: pointer; }
   .filter-reset:hover { text-decoration: underline; }
 
@@ -225,15 +229,22 @@
   <header class="top">
     <div>
       <h1>Altınbaş Üniversitesi — Öğrenci Performans Panosu</h1>
-      <div class="sub" id="hdr-sub">Tüm kayıtlı öğrenci listesi · 2011–2026 giriş yılları · toplam <span id="hdr-total">…</span> kayıt</div>
+      <div class="sub" id="hdr-sub">Tüm kayıtlı öğrenci listesi · <span id="hdr-years">2011–2026</span> giriş yılları · toplam <span id="hdr-total">…</span> kayıt</div>
     </div>
     <div class="top-actions">
+      <a class="nav-link" href="/ozet-rapor/">Özet Rapor →</a>
       <a class="nav-link" href="/fakulte-analizi/">Fakülte / YO / Enstitü Analizi →</a>
       <button class="theme-btn" id="theme-toggle" type="button">‹ Sistem</button>
     </div>
   </header>
 
   <div class="filters">
+    <div class="filter-group yil">
+      <label for="f-yil-bas">Giriş Yılı (Dönem):</label>
+      <select id="f-yil-bas"></select>
+      <span class="yil-sep">–</span>
+      <select id="f-yil-bit"></select>
+    </div>
     <div class="filter-group">
       <label for="f-kayit">Kayıt Türü:</label>
       <select id="f-kayit"><option value="">Tümü</option></select>
@@ -242,6 +253,12 @@
       <label for="f-uyruk">Uyruk:</label>
       <select id="f-uyruk"><option value="">Tümü</option></select>
     </div>
+    <div class="filter-group checkbox">
+      <label for="f-pasif" title="Seçili yılın (en güncel giriş yılı) öğrenci almadığı bölüm/program ve fakülteler gizlenir.">
+        <input type="checkbox" id="f-pasif">
+        Pasif birimleri gizle
+      </label>
+    </div>
     <button class="filter-reset" id="filter-reset" type="button">Filtreleri Temizle</button>
   </div>
 
@@ -249,7 +266,7 @@
 
   <div class="grid cols-2">
     <div class="card" style="margin-bottom:0;">
-      <div class="card-head"><div><div class="card-title">Genel Durum Dağılımı</div><div class="card-desc">Seçili filtrelere göre öğrencilerin mezun / aktif / ayrılan durumuna göre dağılımı.</div></div></div>
+      <div class="card-head"><div><div class="card-title">Genel Durum Dağılımı</div><div class="card-desc">Seçili filtrelere göre öğrencilerin mezun / aktif / ayrılan durumuna göre dağılımı.</div></div><button class="btn" id="donut-dl" type="button">İndir (Excel)</button></div>
       <div class="donut-row">
         <div class="donut-wrap">
           <svg id="donut-svg" viewBox="0 0 190 190" width="190" height="190"></svg>
@@ -260,7 +277,7 @@
     </div>
 
     <div class="card" style="margin-bottom:0;">
-      <div class="card-head"><div><div class="card-title">Eğitim Düzeyi Dağılımı</div><div class="card-desc">Lisans / Ön Lisans / Lisansüstü (Yüksek Lisans + Doktora) düzeyinde durum dağılımı.</div></div></div>
+      <div class="card-head"><div><div class="card-title">Eğitim Düzeyi Dağılımı</div><div class="card-desc">Lisans / Ön Lisans / Lisansüstü (Yüksek Lisans + Doktora) düzeyinde durum dağılımı.</div></div><button class="btn" id="egt-dl" type="button">İndir (Excel)</button></div>
       <div class="legend">
         <div class="legend-item"><span class="legend-swatch" style="background:var(--c-mezun)"></span>Mezun</div>
         <div class="legend-item"><span class="legend-swatch" style="background:var(--c-aktif)"></span>Aktif</div>
@@ -276,7 +293,10 @@
         <div class="card-title">Fakülte / Yüksekokul / Enstitü Dağılımı</div>
         <div class="card-desc" id="chart2-desc">Öğrenci sayıları, mezun / aktif / ayrılan kırılımında. Bir satıra tıklayarak o birimin bölüm kırılımına, oradan da bir bölüme tıklayarak giriş yılına göre kırılımına inebilirsiniz.</div>
       </div>
-      <button class="btn" id="chart2-table-toggle" type="button">Tablo görünümü</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn" id="chart2-table-toggle" type="button">Tablo görünümü</button>
+        <button class="btn" id="chart2-dl" type="button">İndir (Excel)</button>
+      </div>
     </div>
     <div class="legend">
       <div class="legend-item"><span class="legend-swatch" style="background:var(--c-mezun)"></span>Mezun</div>
@@ -295,6 +315,7 @@
         <div class="card-title">Performans İstatistikleri</div>
         <div class="card-desc">Seçili filtrelere göre fakülte / yüksekokul / enstitüler arasında öne çıkan başlıklar. Anlamlı bir kıyas olması için oran bazlı listelerde en az 100 kayıtlı, mezuniyet süresi listesinde en az 30 mezunu olan birimler dikkate alınmıştır.</div>
       </div>
+      <button class="btn" id="stats-dl" type="button">İndir (Excel)</button>
     </div>
     <div class="stats-grid" id="stats-grid"></div>
   </div>
@@ -347,22 +368,71 @@ function showTooltip(evt, titleText, rows) {
 function hideTooltip() { tooltipEl.classList.remove('show'); }
 function getHex(varName) { return getComputedStyle(document.documentElement).getPropertyValue(varName).trim(); }
 
+/* ---------- excel export (HTML-table trick, opens directly in Excel) ---------- */
+function downloadExcel(filename, headers, rows) {
+  const esc = v => (v===null||v===undefined) ? '' : String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let html = '<table><thead><tr>' + headers.map(h => `<th>${esc(h)}</th>`).join('') + '</tr></thead><tbody>';
+  rows.forEach(row => { html += '<tr>' + row.map(c => `<td>${esc(c)}</td>`).join('') + '</tr>'; });
+  html += '</tbody></table>';
+  const full = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>${html}</body></html>`;
+  const blob = new Blob(['﻿' + full], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename.endsWith('.xls') ? filename : filename + '.xls';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ---------- pasif (öğrenci almayan) birim tespiti ---------- */
+const GIRIS_IDX = 8;
+const GUNCEL_YIL = Math.max(...DATA.rows.map(r => r[GIRIS_IDX]));
+const activeDepts = new Set();
+DATA.rows.forEach(r => { if (r[GIRIS_IDX] === GUNCEL_YIL) activeDepts.add(r[1]); });
+const PASSIVE_DEPTS = new Set(DATA.DEPTS.map((d,i) => i).filter(i => !activeDepts.has(i)));
+
 /* ---------- filters ---------- */
-const state = { kayit: null, uyruk: null };
+const YEARS = [...new Set(DATA.rows.map(r => r[GIRIS_IDX]))].sort((a,b) => a-b);
+const state = { kayit: null, uyruk: null, yilBas: YEARS[0], yilBit: YEARS[YEARS.length-1], pasifGizle: false };
 const selKayit = document.getElementById('f-kayit');
 const selUyruk = document.getElementById('f-uyruk');
+const selYilBas = document.getElementById('f-yil-bas');
+const selYilBit = document.getElementById('f-yil-bit');
+const chkPasif = document.getElementById('f-pasif');
 DATA.KAYIT_GRUP.forEach((name, i) => { if (i === 0) return; const o = document.createElement('option'); o.value = i; o.textContent = name; selKayit.appendChild(o); });
 DATA.UYRUK_GRUP.forEach((name, i) => { const o = document.createElement('option'); o.value = i; o.textContent = name; selUyruk.appendChild(o); });
+YEARS.forEach(y => { const o = document.createElement('option'); o.value = y; o.textContent = y; selYilBas.appendChild(o); });
+YEARS.forEach(y => { const o = document.createElement('option'); o.value = y; o.textContent = y; selYilBit.appendChild(o); });
+selYilBas.value = state.yilBas; selYilBit.value = state.yilBit;
+
+function updateHdrYears() {
+  const el = document.getElementById('hdr-years');
+  if (el) el.textContent = state.yilBas === state.yilBit ? `${state.yilBas}` : `${state.yilBas}–${state.yilBit}`;
+}
+
 selKayit.addEventListener('change', () => { state.kayit = selKayit.value === '' ? null : +selKayit.value; renderAll(); });
 selUyruk.addEventListener('change', () => { state.uyruk = selUyruk.value === '' ? null : +selUyruk.value; renderAll(); });
+selYilBas.addEventListener('change', () => {
+  state.yilBas = +selYilBas.value;
+  if (state.yilBas > state.yilBit) { state.yilBit = state.yilBas; selYilBit.value = state.yilBit; }
+  renderAll();
+});
+selYilBit.addEventListener('change', () => {
+  state.yilBit = +selYilBit.value;
+  if (state.yilBit < state.yilBas) { state.yilBas = state.yilBit; selYilBas.value = state.yilBas; }
+  renderAll();
+});
+chkPasif.addEventListener('change', () => { state.pasifGizle = chkPasif.checked; renderAll(); });
 document.getElementById('filter-reset').addEventListener('click', () => {
-  state.kayit = null; state.uyruk = null; selKayit.value = ''; selUyruk.value = ''; renderAll();
+  state.kayit = null; state.uyruk = null; state.yilBas = YEARS[0]; state.yilBit = YEARS[YEARS.length-1]; state.pasifGizle = false;
+  selKayit.value = ''; selUyruk.value = ''; selYilBas.value = state.yilBas; selYilBit.value = state.yilBit; chkPasif.checked = false;
+  renderAll();
 });
 
 function filterRows() {
   return DATA.rows.filter(r =>
     (state.kayit === null || r[4] === state.kayit) &&
-    (state.uyruk === null || r[5] === state.uyruk)
+    (state.uyruk === null || r[5] === state.uyruk) &&
+    r[GIRIS_IDX] >= state.yilBas && r[GIRIS_IDX] <= state.yilBit &&
+    (!state.pasifGizle || !PASSIVE_DEPTS.has(r[1]))
   );
 }
 
@@ -387,6 +457,7 @@ function aggCat(rows) {
 
 function renderAll() {
   const rows = filterRows();
+  updateHdrYears();
   document.getElementById('hdr-total').textContent = fmt(rows.length);
   renderKPIs(rows);
   renderDonut(rows);
@@ -730,6 +801,48 @@ function renderStatsGrid(rows) {
     valueFmt: v => v.toFixed(1).replace('.', ',') + '%',
   });
 }
+
+/* ---------- excel indirme butonları ---------- */
+document.getElementById('donut-dl').addEventListener('click', () => {
+  const rows = filterRows();
+  const o = aggCat(rows);
+  downloadExcel('genel_durum_dagilimi', ['Durum', 'Öğrenci Sayısı', 'Yüzde'], [
+    ['Mezun', o.mezun, pct(o.mezun, o.toplam)],
+    ['Aktif', o.aktif, pct(o.aktif, o.toplam)],
+    ['Ayrılan', o.ayrilan, pct(o.ayrilan, o.toplam)],
+    ['Toplam', o.toplam, '100%'],
+  ]);
+});
+
+document.getElementById('egt-dl').addEventListener('click', () => {
+  const rows = filterRows();
+  const groups = [
+    { name: 'Lisans', filt: r => r[2] === 0 },
+    { name: 'Ön Lisans', filt: r => r[2] === 1 },
+    { name: 'Lisansüstü (Y.Lisans + Doktora)', filt: r => r[2] === 2 || r[2] === 3 },
+  ];
+  const out = groups.map(g => { const o = aggCat(rows.filter(g.filt)); return [g.name, o.mezun, o.aktif, o.ayrilan, o.toplam, pct(o.mezun, o.toplam)]; });
+  downloadExcel('egitim_duzeyi_dagilimi', ['Eğitim Düzeyi', 'Mezun', 'Aktif', 'Ayrılan', 'Toplam', 'Mezun Oranı'], out);
+});
+
+document.getElementById('chart2-dl').addEventListener('click', () => {
+  const { items } = chart2Data();
+  const lvl = chart2Level();
+  const nameHead = lvl === 2 ? 'Giriş Yılı' : lvl === 1 ? 'Bölüm / Program' : 'Fakülte / Yüksekokul / Enstitü';
+  const out = items.map(it => [it.name, it.mezun, it.aktif, it.ayrilan, it.toplam, pct(it.mezun, it.toplam)]);
+  downloadExcel('fakulte_yo_enstitu_dagilimi', [nameHead, 'Mezun', 'Aktif', 'Ayrılan', 'Toplam', 'Mezuniyet Oranı'], out);
+});
+
+document.getElementById('stats-dl').addEventListener('click', () => {
+  const rows = filterRows();
+  const stats = aggFakStats(rows);
+  const out = stats.map(s => [
+    s.name, s.toplam, s.aktif,
+    pct(s.yatay, s.toplam), pct(s.hazirlik, s.toplam),
+    s.gradN >= 30 ? ((s.gradSum / s.gradN) * 100).toFixed(1).replace('.', ',') + '%' : '—',
+  ]);
+  downloadExcel('performans_istatistikleri', ['Fakülte / Yüksekokul / Enstitü', 'Toplam Kayıt', 'Aktif', 'Yatay Geçişle Ayrılma Oranı', 'Hazırlık Başarısızlığı Oranı', 'Normalize Mezuniyet Süresi'], out);
+});
 
 renderAll();
 </script>
