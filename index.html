@@ -71,7 +71,7 @@
   header.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
   header.top h1 { font-size: 21px; font-weight: 700; margin: 0 0 4px; }
   header.top .sub { font-size: 13px; color: var(--text-secondary); }
-  .top-actions { display: flex; align-items: center; gap: 14px; }
+  .top-actions { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; }
   .nav-link { font-size: 13px; color: var(--c-aktif); text-decoration: none; font-weight: 600; white-space: nowrap; }
   .nav-link:hover { text-decoration: underline; }
   .theme-btn {
@@ -241,6 +241,7 @@
     <div class="top-actions">
       <a class="nav-link" href="/ozet-rapor/">Özet Rapor →</a>
       <a class="nav-link" href="/fakulte-analizi/">Fakülte / YO / Enstitü Analizi →</a>
+      <a class="nav-link" href="/analiz/">Karşılaştırmalı Analiz →</a>
       <input type="file" id="data-refresh-input" accept=".xlsx" style="display:none;">
       <button class="btn" id="data-refresh-btn" type="button">Veri Güncelle</button>
       <button class="btn" id="data-download-btn" type="button">Güncellenmiş Dosyayı İndir (.html)</button>
