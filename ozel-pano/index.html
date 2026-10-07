@@ -159,18 +159,41 @@
   .chip:hover { color: var(--text-primary); border-color: var(--baseline); }
   .chip.active { background: var(--text-primary); color: var(--surface-card); border-color: var(--text-primary); font-weight: 600; }
   .chip.preset { border-style: dashed; }
-  .pk-cats { margin: 4px 0 14px; }
-  .pk-group-title { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary); margin: 18px 0 8px; }
-  .pk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-  .pk-card { text-align: left; border: 1.5px solid var(--border); border-radius: 12px; background: var(--surface-card); padding: 12px 14px; cursor: pointer; color: var(--text-primary); font: inherit; position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 118px; box-shadow: var(--shadow); }
-  .pk-card:hover { border-color: var(--baseline); }
-  .pk-card.on { border-color: var(--c-aktif); box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-aktif) 28%, transparent); }
-  .pk-card.full:not(.on) { opacity: .5; cursor: not-allowed; }
-  .pk-kind { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); padding-right: 30px; }
-  .pk-name { font-size: 14px; font-weight: 700; line-height: 1.3; padding-right: 30px; }
-  .pk-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.45; }
-  .pk-badge { position: absolute; top: 10px; right: 10px; min-width: 24px; height: 24px; border-radius: 999px; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: transparent; }
-  .pk-card.on .pk-badge { background: var(--c-aktif); border-color: var(--c-aktif); color: #fff; }
+  .pk-panel { margin-bottom: 14px; }
+  .pk-row { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
+  .pk-lbl { flex: 0 0 120px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary); padding-top: 8px; }
+  .pk-dds { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; min-width: 0; }
+  .dd { position: relative; }
+  .dd-btn { font: inherit; font-size: 13.5px; font-weight: 600; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .dd-btn:hover { border-color: var(--baseline); }
+  .dd.open .dd-btn { border-color: var(--text-primary); }
+  .dd-cnt { font-size: 11.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--surface-card); border: 1px solid var(--border); color: var(--text-muted); }
+  .dd-cnt.has { background: var(--c-aktif); border-color: var(--c-aktif); color: #fff; }
+  .dd-car { font-size: 10px; color: var(--text-muted); transition: transform .15s; }
+  .dd.open .dd-car { transform: rotate(180deg); }
+  .dd-panel { display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; width: 420px; max-width: calc(100vw - 32px); max-height: min(60vh, 460px); overflow-y: auto; background: var(--surface-card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,.18); padding: 6px; }
+  .dd.open .dd-panel { display: block; }
+  .dd-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+  .dd-item:hover { background: var(--surface-1); }
+  .dd-item input { margin-top: 3px; flex: none; width: 16px; height: 16px; cursor: pointer; }
+  .dd-item.dis { opacity: .5; cursor: not-allowed; }
+  .dd-item.dis input { cursor: not-allowed; }
+  .dd-name { font-size: 13.5px; font-weight: 600; line-height: 1.3; color: var(--text-primary); }
+  .dd-kind { font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); margin-left: 6px; }
+  .dd-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-top: 2px; }
+  .pk-n { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-left: 6px; }
+  .pk-sel { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; }
+  .pk-sel li { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-top: 1px solid var(--border); }
+  .pk-sel li:first-child { border-top: 0; }
+  .pk-sel .no { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--c-aktif); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .pk-sel .nm { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; }
+  .pk-sel .nm small { display: block; font-weight: 400; font-size: 11.5px; color: var(--text-muted); }
+  .pk-sel .bt { flex: none; display: flex; gap: 4px; }
+  .pk-sel .bt button { font-size: 12px; padding: 2px 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-card); color: var(--text-secondary); cursor: pointer; line-height: 1.4; }
+  .pk-sel .bt button:hover:not(:disabled) { color: var(--text-primary); border-color: var(--baseline); }
+  .pk-sel .bt button:disabled { opacity: .35; cursor: not-allowed; }
+  .pk-empty { font-size: 13px; color: var(--text-muted); padding: 10px 2px; }
+  @media (max-width: 600px) { .pk-lbl { flex-basis: 100%; padding-top: 0; } .dd { flex: 1 1 100%; } .dd-btn { width: 100%; justify-content: space-between; } .dd-panel { position: static; width: auto; max-width: none; margin-top: 6px; max-height: 50vh; box-shadow: none; } }
   .pk-bar { position: sticky; bottom: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; padding: 12px 16px; background: var(--surface-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 -2px 12px rgba(0,0,0,.10); }
   .pk-count { font-size: 13.5px; color: var(--text-secondary); }
   .pk-count b { font-size: 16px; color: var(--text-primary); margin-right: 6px; }
@@ -218,7 +241,7 @@
   <header class="top">
     <div>
       <h1>Kendi Panonu Oluştur</h1>
-      <div class="sub">Katalogdan 5–10 tablo / grafik seçin; seçtikleriniz tek bir panoda, ortak filtrelerle bir arada görünsün.</div>
+      <div class="sub">Listelerden bir veya birkaç (en fazla 10) tablo / grafik seçin; seçtikleriniz tek bir panoda, ortak filtrelerle görünsün.</div>
     </div>
     <div class="top-actions">
       <a class="nav-link" href="/">← Ana Pano</a>
@@ -233,17 +256,23 @@
     <div class="data-status" id="data-refresh-status" style="flex-basis:100%;"></div>
   </header>
 
-  <!-- ===== 1. adım: katalog / seçim ===== -->
+  <!-- ===== 1. adım: seçim ===== -->
   <section id="picker">
-    <div class="card">
+    <div class="card pk-panel">
       <div class="card-head"><div>
         <div class="card-title">1 · Panonuzda görmek istediklerinizi seçin</div>
-        <div class="card-desc">Aşağıdaki katalogdan <b>en az 5, en fazla 10</b> tablo veya grafik seçin. Seçim sırası, panodaki sıradır (sonra değiştirebilirsiniz). Hazır bir paketle de başlayabilirsiniz.</div>
+        <div class="card-desc">Beş başlıktan birini açıp listeden tablo veya grafik işaretleyin. <b>Tek bir tablo ya da grafik</b> seçebileceğiniz gibi en fazla 10 tane birleştirebilirsiniz. Hazır bir paketle de başlayabilirsiniz.</div>
       </div></div>
-      <div class="chips" id="pk-presets"></div>
+      <div class="pk-row"><span class="pk-lbl">Hazır paketler</span><div class="chips" id="pk-presets"></div></div>
+      <div class="pk-row"><span class="pk-lbl">Listelerden seç</span><div class="pk-dds" id="pk-dds"></div></div>
     </div>
-    <div class="chips pk-cats" id="pk-cats"></div>
-    <div id="pk-grid"></div>
+    <div class="card pk-panel">
+      <div class="card-head"><div>
+        <div class="card-title">Seçtikleriniz <span class="pk-n" id="pk-count-top"></span></div>
+        <div class="card-desc">Sıra, panodaki sıradır; ↑ ↓ ile değiştirebilirsiniz.</div>
+      </div></div>
+      <ol class="pk-sel" id="pk-sel"></ol>
+    </div>
     <div class="pk-bar" id="pk-bar">
       <div class="pk-count"><b id="pk-count">0 / 10</b> <span id="pk-hint"></span></div>
       <div class="pk-btns">
@@ -1434,7 +1463,7 @@ function buildYariAktifTrendCard(rows) {
 }
 
 /* ====================== Kendi Panonu Oluştur ====================== */
-const MIN_SEL = 5, MAX_SEL = 10;
+const MIN_SEL = 1, MAX_SEL = 10;
 /*SEL_START*/let DEFAULT_SEL = null;/*SEL_END*/
 
 /* ---------- yeni METRICS: dashboard'daki performans sıralamaları ---------- */
@@ -1704,7 +1733,7 @@ const PRESETS = [
 ];
 
 /* ---------- seçim durumu ---------- */
-let sel = [], view = 'pick', boardTitle = 'Özel Panom', pkCat = 'Tümü', uiStarted = false;
+let sel = [], view = 'pick', boardTitle = 'Özel Panom', uiStarted = false;
 const cleanIds = ids => { const out = []; (ids || []).forEach(id => { if (CAT_MAP[id] && out.indexOf(id) === -1 && out.length < MAX_SEL) out.push(id); }); return out; };
 function persist() {
   const h = '#b=' + sel.join(',') + '&t=' + encodeURIComponent(boardTitle) + (view === 'board' ? '&v=board' : '');
@@ -1726,51 +1755,84 @@ function readInitial() {
   }
 }
 
-/* ---------- 1. adım: katalog ---------- */
-function renderPicker() {
+/* ---------- 1. adım: seçim (açılır listeler) ---------- */
+let openCat = null, ddBuilt = false;
+function buildPicker() {
   const pc = $('pk-presets'); pc.innerHTML = '';
   PRESETS.forEach(p => {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip preset'; b.textContent = 'Hazır paket: ' + p.name + ' (' + p.ids.length + ')';
-    b.addEventListener('click', () => { sel = cleanIds(p.ids); persist(); renderPicker(); });
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip preset'; b.textContent = p.name + ' (' + p.ids.length + ')';
+    b.title = p.ids.map(id => CAT_MAP[id].name).join(' · ');
+    b.addEventListener('click', () => { sel = cleanIds(p.ids); persist(); syncPicker(); });
     pc.appendChild(b);
   });
-  const cc = $('pk-cats'); cc.innerHTML = '';
-  ['Tümü', ...CATEGORIES].forEach(c => {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (pkCat === c ? ' active' : ''); b.textContent = c;
-    b.addEventListener('click', () => { pkCat = c; renderPicker(); });
-    cc.appendChild(b);
-  });
-  const grid = $('pk-grid'); grid.innerHTML = '';
-  (pkCat === 'Tümü' ? CATEGORIES : [pkCat]).forEach(cat => {
-    const list = CATALOG.filter(b => b.cat === cat);
-    if (!list.length) return;
-    const t = document.createElement('div'); t.className = 'pk-group-title'; t.textContent = cat + ' · ' + list.length; grid.appendChild(t);
-    const g = document.createElement('div'); g.className = 'pk-grid';
+  const dds = $('pk-dds'); dds.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const list = CATALOG.filter(b => b.cat === cat); if (!list.length) return;
+    const dd = document.createElement('div'); dd.className = 'dd'; dd.dataset.cat = cat;
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'dd-btn'; btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
+    btn.innerHTML = '<span class="dd-t"></span><span class="dd-cnt"></span><span class="dd-car">▼</span>';
+    btn.querySelector('.dd-t').textContent = cat;
+    btn.addEventListener('click', e => { e.stopPropagation(); openCat = openCat === cat ? null : cat; syncDropdowns(); });
+    const panel = document.createElement('div'); panel.className = 'dd-panel';
+    panel.addEventListener('click', e => e.stopPropagation());
     list.forEach(b => {
-      const pos = sel.indexOf(b.id), on = pos !== -1;
-      const el = document.createElement('button'); el.type = 'button'; el.className = 'pk-card' + (on ? ' on' : '') + (!on && sel.length >= MAX_SEL ? ' full' : '');
-      el.setAttribute('aria-pressed', on ? 'true' : 'false');
-      el.innerHTML = '<span class="pk-kind"></span><span class="pk-name"></span><span class="pk-desc"></span><span class="pk-badge"></span>';
-      el.children[0].textContent = b.kind; el.children[1].textContent = b.name; el.children[2].textContent = b.desc; el.children[3].textContent = on ? String(pos + 1) : '✓';
-      el.addEventListener('click', () => {
+      const lab = document.createElement('label'); lab.className = 'dd-item'; lab.dataset.id = b.id;
+      lab.innerHTML = '<input type="checkbox"><span><span class="dd-name"></span><span class="dd-kind"></span><div class="dd-desc"></div></span>';
+      lab.querySelector('.dd-name').textContent = b.name; lab.querySelector('.dd-kind').textContent = b.kind; lab.querySelector('.dd-desc').textContent = b.desc;
+      const cb = lab.querySelector('input');
+      cb.addEventListener('change', () => {
         const i = sel.indexOf(b.id);
-        if (i !== -1) sel.splice(i, 1);
-        else if (sel.length < MAX_SEL) sel.push(b.id);
-        else { $('pk-hint').textContent = 'En fazla ' + MAX_SEL + ' blok seçebilirsiniz; birini kaldırın.'; return; }
-        persist(); renderPicker();
+        if (cb.checked) { if (i === -1) { if (sel.length < MAX_SEL) sel.push(b.id); else { cb.checked = false; $('pk-hint').textContent = 'En fazla ' + MAX_SEL + ' seçebilirsiniz; önce birini kaldırın.'; return; } } }
+        else if (i !== -1) sel.splice(i, 1);
+        persist(); syncPicker();
       });
-      g.appendChild(el);
+      panel.appendChild(lab);
     });
-    grid.appendChild(g);
+    dd.appendChild(btn); dd.appendChild(panel); dds.appendChild(dd);
+  });
+  ddBuilt = true;
+}
+function syncDropdowns() {
+  document.querySelectorAll('#pk-dds .dd').forEach(dd => {
+    const cat = dd.dataset.cat, isOpen = openCat === cat;
+    dd.classList.toggle('open', isOpen);
+    dd.querySelector('.dd-btn').setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    const n = CATALOG.filter(b => b.cat === cat && sel.indexOf(b.id) !== -1).length, tot = CATALOG.filter(b => b.cat === cat).length;
+    const cn = dd.querySelector('.dd-cnt'); cn.textContent = n + ' / ' + tot; cn.classList.toggle('has', n > 0);
+    dd.querySelectorAll('.dd-item').forEach(lab => {
+      const on = sel.indexOf(lab.dataset.id) !== -1, full = !on && sel.length >= MAX_SEL;
+      const cb = lab.querySelector('input'); cb.checked = on; cb.disabled = full; lab.classList.toggle('dis', full);
+    });
+  });
+}
+function syncPicker() {
+  if (!ddBuilt) buildPicker();
+  syncDropdowns();
+  const ol = $('pk-sel'); ol.innerHTML = '';
+  if (!sel.length) { const d = document.createElement('li'); d.className = 'pk-empty'; d.textContent = 'Henüz bir şey seçmediniz. Yukarıdaki listelerden işaretleyin veya hazır bir paket seçin.'; ol.appendChild(d); }
+  sel.forEach((id, i) => {
+    const b = CAT_MAP[id], li = document.createElement('li');
+    li.innerHTML = '<span class="no"></span><span class="nm"><span class="n1"></span><small></small></span><span class="bt"><button type="button" data-a="up" title="Yukarı taşı">↑</button><button type="button" data-a="down" title="Aşağı taşı">↓</button><button type="button" data-a="rm" title="Kaldır">✕</button></span>';
+    li.querySelector('.no').textContent = String(i + 1); li.querySelector('.n1').textContent = b.name; li.querySelector('small').textContent = b.cat + ' · ' + b.kind;
+    const bu = li.querySelector('[data-a=up]'), bd = li.querySelector('[data-a=down]'), br = li.querySelector('[data-a=rm]');
+    bu.disabled = i === 0; bd.disabled = i === sel.length - 1;
+    bu.addEventListener('click', () => { sel.splice(i - 1, 0, sel.splice(i, 1)[0]); persist(); syncPicker(); });
+    bd.addEventListener('click', () => { sel.splice(i + 1, 0, sel.splice(i, 1)[0]); persist(); syncPicker(); });
+    br.addEventListener('click', () => { sel.splice(i, 1); persist(); syncPicker(); });
+    ol.appendChild(li);
   });
   const n = sel.length;
   $('pk-count').textContent = n + ' / ' + MAX_SEL;
-  $('pk-hint').textContent = n < MIN_SEL ? 'en az ' + (MIN_SEL - n) + ' blok daha seçin' : n === MAX_SEL ? 'üst sınıra ulaştınız' : 'hazır — dilerseniz ' + (MAX_SEL - n) + ' blok daha ekleyebilirsiniz';
+  $('pk-count-top').textContent = n ? '(' + n + ')' : '';
+  $('pk-hint').textContent = n === 0 ? 'en az 1 tablo veya grafik seçin' : n === 1 ? 'tek bir tablo / grafik gösterilecek; isterseniz daha fazla ekleyin' : n === MAX_SEL ? 'üst sınıra ulaştınız' : (MAX_SEL - n) + ' tane daha ekleyebilirsiniz';
   $('pk-go').disabled = n < MIN_SEL || n > MAX_SEL;
   $('pk-clear').disabled = n === 0;
 }
-$('pk-clear').addEventListener('click', () => { sel = []; persist(); renderPicker(); });
-$('pk-go').addEventListener('click', () => { if (sel.length >= MIN_SEL) { view = 'board'; showView(); window.scrollTo(0, 0); } });
+function renderPicker() { syncPicker(); }
+document.addEventListener('click', () => { if (openCat !== null) { openCat = null; syncDropdowns(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && openCat !== null) { openCat = null; syncDropdowns(); } });
+$('pk-clear').addEventListener('click', () => { sel = []; persist(); syncPicker(); });
+$('pk-go').addEventListener('click', () => { if (sel.length >= MIN_SEL) { openCat = null; view = 'board'; showView(); window.scrollTo(0, 0); } });
 
 /* ---------- 2. adım: pano ---------- */
 function showView() {
@@ -1800,7 +1862,7 @@ function renderBoard() {
     tools.querySelector('.blk-tag').textContent = (i + 1) + ' · ' + b.kind;
     const bu = tools.querySelector('[data-a=up]'), bd = tools.querySelector('[data-a=down]'), br = tools.querySelector('[data-a=rm]');
     bu.disabled = i === 0; bd.disabled = i === sel.length - 1; br.disabled = sel.length <= MIN_SEL;
-    if (br.disabled) br.title = 'Panoda en az ' + MIN_SEL + ' blok kalmalı';
+    if (br.disabled) br.title = 'Panoda en az bir tablo / grafik kalmalı';
     bu.addEventListener('click', () => { sel.splice(i - 1, 0, sel.splice(i, 1)[0]); persist(); renderBoard(); });
     bd.addEventListener('click', () => { sel.splice(i + 1, 0, sel.splice(i, 1)[0]); persist(); renderBoard(); });
     br.addEventListener('click', () => { sel.splice(i, 1); persist(); renderBoard(); });
